@@ -14,6 +14,10 @@ let g:ncm2_bufword#source = get(g:, 'ncm2_bufword#source', {
             \ 'on_warmup': {_ -> g:ncm2_bufword#proc.jobstart()},
             \ })
 
+let g:ncm2_bufword#source = extend(g:ncm2_bufword#source,
+            \ get(g:, 'ncm2_bufword#source_override', {}),
+            \ 'force')
+
 func! ncm2_bufword#init()
     call ncm2#register_source(g:ncm2_bufword#source)
 endfunc
