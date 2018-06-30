@@ -37,8 +37,10 @@ class Source(Ncm2Source):
                         # filter-out the word at current cursor
                         if (ccol - 1 >= span[0]) and (ccol - 1 <= span[1]):
                             continue
-                        m = self.match_formalize(ctx, word.group())
-                        if matcher(b, m):
+                        w = word.group()
+                        m = self.match_formalize(ctx, w)
+                        if w not in seen and matcher(b, m):
+                            seen[w] = True
                             matches.append(m)
                 else:
                     for word in pat.finditer(line):
