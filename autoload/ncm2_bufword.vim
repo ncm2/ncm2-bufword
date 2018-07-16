@@ -10,6 +10,7 @@ let g:ncm2_bufword#source = extend(get(g:, 'ncm2_bufword#source', {}), {
             \ 'priority': 5,
             \ 'mark': 'b',
             \ 'on_complete': 'ncm2_bufword#on_complete',
+            \ 'on_completed': 'ncm2_bufword#on_completed',
             \ 'on_warmup': 'ncm2_bufword#on_warmup',
             \ }, 'keep')
 
@@ -23,5 +24,9 @@ endfunc
 
 func! ncm2_bufword#on_complete(ctx)
     call g:ncm2_bufword#proc.try_notify('on_complete', a:ctx)
+endfunc
+
+func! ncm2_bufword#on_completed(ctx, completed)
+    call g:ncm2_bufword#proc.try_notify('on_completed', a:ctx, a:completed)
 endfunc
 
