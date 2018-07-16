@@ -106,16 +106,13 @@ class Source(Ncm2Source):
                 continue
 
             searchstr = line[cur_word_end: ]
-            match = None
-            for mat in pat.finditer(searchstr):
-                match = mat
-                break
-            if match is None:
+            mat = pat.search(searchstr)
+            if mat is None:
                 if not len(searchstr):
                     return
                 w = searchstr
             else:
-                w = searchstr[: match.end()]
+                w = searchstr[: mat.end()]
 
             item = {'user_data': {}}
             if w not in seen:
