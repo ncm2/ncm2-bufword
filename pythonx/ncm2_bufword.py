@@ -106,20 +106,28 @@ class Source(Ncm2Source):
                 continue
 
             searchstr = line[cur_word_end: ]
+            match = None
             for mat in pat.finditer(searchstr):
-                w = searchstr[: mat.end()]
-                item = {'user_data': {}}
-                if w not in seen:
-                    seen[w] = item
-                    item['user_data']['location'] = []
-                    item['user_data']['word'] = w
-                    matches.append(item)
-                item['word'] = w
-                ud = seen[w]['user_data']
-                new_loc = deepcopy(loc)
-                new_loc['ccol'] = cur_word_end + 1
-                ud['location'].append(new_loc)
+                match = mat
                 break
+            if match is None:
+                if not len(searchstr):
+                    return
+                w = searchstr
+            else:
+                w = searchstr[: match.end()]
+
+            item = {'user_data': {}}
+            if w not in seen:
+                seen[w] = item
+                item['user_data']['location'] = []
+                item['user_data']['word'] = w
+                matches.append(item)
+            item['word'] = w
+            ud = seen[w]['user_data']
+            new_loc = deepcopy(loc)
+            new_loc['ccol'] = cur_word_end + 1
+            ud['location'].append(new_loc)
 
         self.complete(ctx, ctx['ccol'], matches)
 
