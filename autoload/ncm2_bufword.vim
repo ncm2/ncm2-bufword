@@ -7,12 +7,16 @@ let g:ncm2_bufword#proc = yarp#py3('ncm2_bufword')
 
 let g:ncm2_bufword#source = extend(get(g:, 'ncm2_bufword#source', {}), {
             \ 'name': 'bufword',
+            \ 'ready': 0,
             \ 'priority': 5,
             \ 'mark': 'b',
             \ 'on_complete': 'ncm2_bufword#on_complete',
             \ 'on_completed': 'ncm2_bufword#on_completed',
             \ 'on_warmup': 'ncm2_bufword#on_warmup',
             \ }, 'keep')
+
+let g:ncm2_bufword#proc.on_load =
+            \ { -> ncm2#set_ready(g:ncm2_bufword#source)}
 
 func! ncm2_bufword#init()
     call ncm2#register_source(g:ncm2_bufword#source)
