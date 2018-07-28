@@ -80,9 +80,6 @@ class Source(Ncm2Source):
         word = ud['word']
         location = ud['location']
 
-        if ctx['dated']:
-            return
-
         pat = re.compile(ctx['word_pattern'])
 
         matches = []
