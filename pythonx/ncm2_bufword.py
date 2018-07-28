@@ -28,6 +28,25 @@ class Source(Ncm2Source):
         matches = []
         seen = {}
 
+        def add_match(bufnr, re_match, lnum):
+            w = re_match.group()
+            if w in seen:
+                item = seen[w]
+                ud = item['user_data']
+            else:
+                item = self.match_formalize(ctx, w)
+                if not matcher(b, item):
+                    return
+                seen[w] = item
+                ud = item['user_data']
+                ud['location'] = []
+                ud['word'] = w
+                matches.append(item)
+            ud['location'].append(dict(lnum=lnum,
+                                       word=w,
+                                       ccol=re_match.start() + 1,
+                                       bufnr=bufnr))
+
         beginl = max(lnum - 1 - int(lines / 2), 0)
         endl = lnum - 1 + int(lines / 2)
         stepl = 1000
@@ -42,42 +61,15 @@ class Source(Ncm2Source):
                         # filter-out the word at current cursor
                         if (ccol - 1 >= span[0]) and (ccol - 1 <= span[1]):
                             continue
-                        w = word.group()
-                        item = self.match_formalize(ctx, w)
-                        if not matcher(b, item):
-                            continue
-                        if w not in seen:
-                            seen[w] = item
-                            item['user_data']['location'] = []
-                            item['user_data']['word'] = w
-                            matches.append(item)
-                        ud = seen[w]['user_data']
-                        ud['location'].append(
-                            dict(lnum=scan_lnum,
-                                 ccol=word.start() + 1,
-                                 bufnr=bufnr))
+                        add_match(bufnr, word, scan_lnum)
                 else:
                     for word in pat.finditer(line):
-                        w = word.group()
-                        item = self.match_formalize(ctx, w)
-                        if not matcher(b, item):
-                            continue
-                        if w not in seen:
-                            seen[w] = item
-                            item['user_data']['location'] = []
-                            item['user_data']['word'] = w
-                            matches.append(item)
-                        ud = seen[w]['user_data']
-                        ud['location'].append(
-                            dict(lnum=scan_lnum,
-                                 ccol=word.start() + 1,
-                                 bufnr=bufnr))
+                        add_match(bufnr, word, scan_lnum)
 
         self.complete(ctx, ctx['startccol'], matches)
 
     def on_completed(self, ctx, completed):
         ud = completed['user_data']
-        word = ud['word']
         location = ud['location']
 
         pat = re.compile(ctx['word_pattern'])
@@ -95,24 +87,45 @@ class Source(Ncm2Source):
 
             ccol = loc['ccol']
             buf = vim.buffers[bufnr]
-            line = buf[lnum - 1]
+            lines = buf[lnum - 1: lnum - 1 + 2]
+            line = lines[0]
+            if len(lines) > 1:
+                next_line = lines[1]
+            else:
+                next_line = ''
 
             logger.debug("line [%s]", line)
 
+            word = loc['word']
             cur_word_end = ccol - 1 + len(word)
             cur_word = line[ccol - 1: cur_word_end]
+
             if word != cur_word:
                 logger.debug('word [%s] != cur word [%s]', word, cur_word)
                 continue
 
-            searchstr = line[cur_word_end: ]
-            mat = pat.search(searchstr)
-            if mat is None:
-                if not len(searchstr):
-                    return
-                w = searchstr
+            if cur_word_end == len(line):
+                search_text = next_line
+                mat = pat.search(search_text)
+                if mat is None:
+                    continue
+                w = search_text[: mat.end()]
+                search_text = next_line
+                new_loc = deepcopy(loc)
+                new_loc['ccol'] = 1
+                new_loc['lnum'] += 1
+                new_loc['word'] = w
+                w = ' ' + w
             else:
-                w = searchstr[: mat.end()]
+                search_text = line[cur_word_end:]
+                mat = pat.search(search_text)
+                if mat is None:
+                    w = search_text
+                else:
+                    w = search_text[: mat.end()]
+                new_loc = deepcopy(loc)
+                new_loc['ccol'] = cur_word_end + 1
+                new_loc['word'] = w
 
             item = {'user_data': {}}
             if w not in seen:
@@ -122,11 +135,10 @@ class Source(Ncm2Source):
                 matches.append(item)
             item['word'] = w
             ud = seen[w]['user_data']
-            new_loc = deepcopy(loc)
-            new_loc['ccol'] = cur_word_end + 1
             ud['location'].append(new_loc)
 
         self.complete(ctx, ctx['ccol'], matches)
+
 
 source = Source(vim)
 
