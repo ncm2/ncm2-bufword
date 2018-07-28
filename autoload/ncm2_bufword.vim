@@ -3,7 +3,10 @@ if get(s:, 'loaded', 0)
 endif
 let s:loaded = 1
 
-let g:ncm2_bufword#proc = yarp#py3('ncm2_bufword')
+let g:ncm2_bufword#proc = yarp#py3({
+    \ 'module': 'ncm2_bufword',
+    \ 'on_load': { -> ncm2#set_ready(g:ncm2_bufword#source)}
+    \ })
 
 let g:ncm2_bufword#source = extend(get(g:, 'ncm2_bufword#source', {}), {
             \ 'name': 'bufword',
@@ -14,9 +17,6 @@ let g:ncm2_bufword#source = extend(get(g:, 'ncm2_bufword#source', {}), {
             \ 'on_completed': 'ncm2_bufword#on_completed',
             \ 'on_warmup': 'ncm2_bufword#on_warmup',
             \ }, 'keep')
-
-let g:ncm2_bufword#proc.on_load =
-            \ { -> ncm2#set_ready(g:ncm2_bufword#source)}
 
 func! ncm2_bufword#init()
     call ncm2#register_source(g:ncm2_bufword#source)
