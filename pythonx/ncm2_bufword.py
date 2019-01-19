@@ -23,7 +23,7 @@ class Source(Ncm2Source):
 
         matches = []
 
-        matcher = self.matcher_get(ctx['matcher'])
+        matcher = self.matcher_get(ctx)
 
         matches = []
         seen = {}
